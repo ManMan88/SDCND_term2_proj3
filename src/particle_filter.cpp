@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <iostream>
 #include <numeric>
+#include <random>
 #include <math.h> 
 #include <iostream>
 #include <sstream>
@@ -17,6 +18,8 @@
 
 #include "particle_filter.h"
 
+#define NUM_PARTICLES 1000
+
 using namespace std;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
@@ -24,7 +27,24 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1. 
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
+	num_particles = NUM_PARTICLES;
+	std::default_random_engine generator;
+	std::normal_distribution<double> x_distribution(x,std[0]);
+	std::normal_distribution<double> y_distribution(y,std[1]);
+	std::normal_distribution<double> theta_distribution(theta,std[2]);
 
+	for (int i = 0; i < num_particles; ++i) {
+		Particle init_particle;
+		init_particle.id = i;
+		init_particle.weight = 1.0;
+		init_particle.x = x_distribution(generator);
+		init_particle.y = y_distribution(generator);
+		init_particle.theta = theta_distribution(generator);
+		particles.push_back(init_particle);
+	}
+
+	is_initialized = true;
+	return;
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
