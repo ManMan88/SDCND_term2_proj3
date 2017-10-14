@@ -241,4 +241,16 @@ inline bool read_landmark_data(std::string filename, std::vector<LandmarkObs>& o
 	return true;
 }
 
+
+/**
+* make sure that the yaw angle is in the range [-pi,pi]
+*/
+inline void fixAngle(double &angle) {
+	while (angle > M_PI)
+		angle -= 2*M_PI;
+	while (angle < -M_PI)
+		angle += 2*M_PI;
+	return;
+}
+
 #endif /* HELPER_FUNCTIONS_H_ */
