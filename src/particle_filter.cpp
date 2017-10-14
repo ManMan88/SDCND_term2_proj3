@@ -19,6 +19,7 @@
 #include "particle_filter.h"
 
 #define NUM_PARTICLES 1000
+#define YAW_RATE_THRESHOLD 0.001
 
 using namespace std;
 
@@ -27,8 +28,10 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1. 
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
+
 	num_particles = NUM_PARTICLES;
 	std::default_random_engine generator;
+
 	// generate normal distribution for x
 	std::normal_distribution<double> x_distribution(x,std[0]);
 
@@ -38,7 +41,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// generate normal distribution for theta
 	std::normal_distribution<double> theta_distribution(theta,std[2]);
 
-	// generate patricles using a normal distribution and the GPS measurement
+	// generate particles using a normal distribution and the GPS measurement
 	for (int i = 0; i < num_particles; ++i) {
 		Particle init_particle;
 		init_particle.id = i;
@@ -54,12 +57,38 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	return;
 }
 
-void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
+void ParticleFilter::prediction(double dt, double std_odometry[], double velocity, double yaw_rate) {
 	// TODO: Add measurements to each particle and add random Gaussian noise.
 	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
 
+	std::default_random_engine generator;
+
+	// generate normal distribution for velocity
+	std::normal_distribution<double> v_distribution(velocity,std_odometry[0]);
+
+	// generate normal distribution for yaw_rate
+	std::normal_distribution<double> yaw_rate_distribution(yaw_rate,std_odometry[1]);
+
+	// predict new location for each particle
+	for (int i = 0; i < num_particles; ++i) {
+		double v = v_distribution(generator);
+		double yaw_r = yaw_rate_distribution(generator);
+		double theta = particles[i].theta;
+
+		// avoid dividing by zero
+		if (yaw_r > YAW_RATE_THRESHOLD) {
+			particles[i].x += (v/yaw_r)*(sin(theta+yaw_r*dt) - sin(theta));
+			particles[i].y += (v/yaw_r)*(cos(theta)- cos(theta+yaw_r*dt));
+			particles[i].theta += yaw_r*dt;
+			fixAngle(particles[i].theta);
+		}
+		else {
+			particles[i].x += v*cos(theta)*dt;
+			particles[i].y += v*sin(theta)*dt;
+		}
+	}
 }
 
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
@@ -137,3 +166,4 @@ string ParticleFilter::getSenseY(Particle best)
     s = s.substr(0, s.length()-1);  // get rid of the trailing space
     return s;
 }
+
