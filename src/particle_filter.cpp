@@ -29,10 +29,16 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
 	num_particles = NUM_PARTICLES;
 	std::default_random_engine generator;
+	// generate normal distribution for x
 	std::normal_distribution<double> x_distribution(x,std[0]);
+
+	// generate normal distribution for y
 	std::normal_distribution<double> y_distribution(y,std[1]);
+
+	// generate normal distribution for theta
 	std::normal_distribution<double> theta_distribution(theta,std[2]);
 
+	// generate patricles using a normal distribution and the GPS measurement
 	for (int i = 0; i < num_particles; ++i) {
 		Particle init_particle;
 		init_particle.id = i;
@@ -43,6 +49,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		particles.push_back(init_particle);
 	}
 
+	// now the particle filter is initialized
 	is_initialized = true;
 	return;
 }
