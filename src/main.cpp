@@ -27,7 +27,7 @@ std::string hasData(std::string s) {
 
 int main()
 {
-  uWS::Hub h;
+  uWS::Hub h;]
 
   //Set up parameters here
   double delta_t = 0.1; // Time elapsed between measurements [sec]
@@ -35,6 +35,7 @@ int main()
 
   double sigma_pos [3] = {0.3, 0.3, 0.01}; // GPS measurement uncertainty [x [m], y [m], theta [rad]]
   double sigma_landmark [2] = {0.3, 0.3}; // Landmark measurement uncertainty [x [m], y [m]]
+  double sigma_odometry [2] = {0.3, 0.3}; // velocity and yaw rate uncertainty [v [m/s], yaw_r [rad/s]]
 
   // Read map data
   Map map;
@@ -79,7 +80,7 @@ int main()
 		  	double previous_velocity = std::stod(j[1]["previous_velocity"].get<std::string>());
 			double previous_yawrate = std::stod(j[1]["previous_yawrate"].get<std::string>());
 
-			pf.prediction(delta_t, sigma_pos, previous_velocity, previous_yawrate);
+			pf.prediction(delta_t, sigma_odometry, previous_velocity, previous_yawrate);
 		  }
 
 		  // receive noisy observation data from the simulator
