@@ -101,7 +101,21 @@ void ParticleFilter::dataAssociation(const Map &map_landmarks, Particle &particl
 
 void ParticleFilter::transformObservations(const std::vector<LandmarkObs> &observations, Particle &particle) {
 	// retrieve relevant variables
+	for (int i = 0; i < observations.size(); ++i) {
+		double x = observations[i].x;
+		double y = observations[i].y;
+		double xp = particle.x;
+		double yp = particle.x;
+		double theta = particle.theta;
 
+		// Transform the observation from particle frame to map frame
+		double xm = x*cos(theta) - y*sin(theta) + xp;
+		double ym = x*sin(theta) + y*sin(theta) + yp;
+
+		// append the observations in map frame to the particle
+		particle.sense_x.push_back(xm);
+		particle.sense_y.push_back(ym);
+	}
 }
 
 void ParticleFilter::calcWeight(const Map &map_landmarks, Particle &particle) {
