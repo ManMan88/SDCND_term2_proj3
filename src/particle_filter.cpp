@@ -149,8 +149,7 @@ void ParticleFilter::transformObservations(const std::vector<LandmarkObs> &obser
 }
 
 void ParticleFilter::calcWeight(const Map &map_landmarks, Particle &particle, const double std_landmark[]) {
-	// initialize weight
-	particle.weight = 1;
+	// compute the square of std_landmark
 	const double std_landmark_2[] = {pow(std_landmark[0],2), pow(std_landmark[1],2)};
 
 	// iterate over all observations
@@ -167,6 +166,7 @@ void ParticleFilter::calcWeight(const Map &map_landmarks, Particle &particle, co
 
 		// update total weight
 		particle.weight *= weight;
+		weights.push_back(particle.weight);
 	}
 }
 
@@ -202,6 +202,26 @@ void ParticleFilter::resample() {
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
 
+	// generate discrete distribution based on the particle weights
+	std::default_random_engine generator;
+	std::discrete_distribution<int> w_distribution (weights.begin(),weights.end());
+
+	std::vector<Particle> temp_particles;
+
+	for (int i = 0; i < num_particles; ++i) {
+		Particle new_particle;
+		int particle_index = w_distribution(generator);
+
+		new_particle.id = i;
+		new_particle.weight = 1.0;
+		new_particle.x = particles[particle_index].x;
+		new_particle.y = particles[particle_index].y;
+		new_particle.theta = particles[particle_index].theta;
+		temp_particles.push_back(new_particle);
+	}
+	particles.clear();
+	weights.clear();
+	particles = temp_particles;
 }
 
 Particle ParticleFilter::SetAssociations(Particle particle, std::vector<int> associations, std::vector<double> sense_x, std::vector<double> sense_y)
