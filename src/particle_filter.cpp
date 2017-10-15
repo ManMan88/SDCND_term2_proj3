@@ -148,11 +148,29 @@ void ParticleFilter::transformObservations(const std::vector<LandmarkObs> &obser
 	}
 }
 
-void ParticleFilter::calcWeight(const Map &map_landmarks, Particle &particle) {
+void ParticleFilter::calcWeight(const Map &map_landmarks, Particle &particle, const double std_landmark[]) {
+	// initialize weight
+	particle.weight = 1;
+	const double std_landmark_2[] = {pow(std_landmark[0],2), pow(std_landmark[1],2)};
 
+	// iterate over all observations
+	for (int i = 0; i < particle.associations.size(); ++i) {
+		int landmark_ind = particle.associations[i];
+		double x_map = map_landmarks.landmark_list[landmark_ind].x_f;
+		double y_map = map_landmarks.landmark_list[landmark_ind].y_f;
+		double x_obs = particle.sense_x[i];
+		double y_obs = particle.sense_y[i];
+
+		// calculate multivariate gaussian
+		double weight = 1/(2*M_PI*std_landmark[0]*std_landmark[1]);
+		weight *= exp(-pow(x_obs-x_map,2)/(2*std_landmark_2[0]) - pow(y_obs-y_map,2)/(2*std_landmark_2[2]));
+
+		// update total weight
+		particle.weight *= weight;
+	}
 }
 
-void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
+void ParticleFilter::updateWeights(const double sensor_range, const double std_landmark[],
 		const std::vector<LandmarkObs> &observations, const Map &map_landmarks) {
 	// TODO: Update the weights of each particle using a mult-variate Gaussian distribution. You can read
 	//   more about this distribution here: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
@@ -174,7 +192,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		dataAssociation(map_landmarks,particles[i]);
 
 		// calculate the particle weight
-		calcWeight(map_landmarks,particles[i]);
+		calcWeight(map_landmarks,particles[i],std_landmark);
 	}
 
 }

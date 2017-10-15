@@ -92,7 +92,7 @@ public:
 	 * @param them map landmarks
 	 * @param a particle containing its observations in map coordinates and associations
 	 */
-	void calcWeight(const Map &map_landmarks, Particle &particle);
+	void calcWeight(const Map &map_landmarks, Particle &particle, const double std_landmark[]);
 
 	/**
 	 * updateWeights Updates the weights for each particle based on the likelihood of the 
@@ -102,7 +102,7 @@ public:
 	 * @param observations Vector of landmark observations
 	 * @param map Map class containing map landmarks
 	 */
-	void updateWeights(double sensor_range, double std_landmark[], const std::vector<LandmarkObs> &observations,
+	void updateWeights(const double sensor_range, const double std_landmark[], const std::vector<LandmarkObs> &observations,
 			const Map &map_landmarks);
 	
 	/**
