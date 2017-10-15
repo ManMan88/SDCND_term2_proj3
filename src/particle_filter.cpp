@@ -97,11 +97,41 @@ void ParticleFilter::dataAssociation(const Map &map_landmarks, Particle &particl
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
 
+	// iterate over all observations
+	for (int obs_i = 0; obs_i < particle.sense_x.size(); ++obs_i) {
+		// retrieve relevant variables
+		double x_obs = particle.sense_x[obs_i];
+		double y_obs = particle.sense_y[obs_i];
+
+		double min_distance = 1000000000.0;
+		double associated_landmark_ind = 0;
+
+		// iterate over all landmarks
+		for (int lm_i = 0; lm_i < map_landmarks.landmark_list.size(); ++lm_i) {
+			// retrieve relevant variables
+			double x_map = map_landmarks.landmark_list[lm_i].x_f;
+			double y_map = map_landmarks.landmark_list[lm_i].y_f;
+
+			// compute the distance between landmark and observation
+			double distance = dist(x_map,y_map,x_obs,y_obs);
+
+			// if distance is smaller, update the landmark
+			if ( distance < min_distance) {
+				min_distance = distance;
+				associated_landmark_ind = lm_i;
+			}
+		}
+
+		// append associated landmark
+		particle.associations.push_back(associated_landmark_ind);
+	}
+
 }
 
 void ParticleFilter::transformObservations(const std::vector<LandmarkObs> &observations, Particle &particle) {
-	// retrieve relevant variables
+	// iterate over all observations
 	for (int i = 0; i < observations.size(); ++i) {
+		// retrieve relevant variables
 		double x = observations[i].x;
 		double y = observations[i].y;
 		double xp = particle.x;
