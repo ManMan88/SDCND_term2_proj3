@@ -56,7 +56,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	is_initialized = true;
 	return;
 }
-
+push_back
 void ParticleFilter::prediction(double dt, double std_odometry[], double velocity, double yaw_rate) {
 	// TODO: Add measurements to each particle and add random Gaussian noise.
 	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
@@ -91,11 +91,20 @@ void ParticleFilter::prediction(double dt, double std_odometry[], double velocit
 	}
 }
 
-void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
+void ParticleFilter::dataAssociation(const Map &map_landmarks, Particle &particle) {
 	// TODO: Find the predicted measurement that is closest to each observed measurement and assign the 
 	//   observed measurement to this particular landmark.
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
+
+}
+
+void ParticleFilter::transformObservations(const std::vector<LandmarkObs> &observations, Particle &particle) {
+	// retrieve relevant variables
+
+}
+
+void ParticleFilter::calcWeight(const Map &map_landmarks, Particle &particle) {
 
 }
 
@@ -111,6 +120,19 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   and the following is a good resource for the actual equation to implement (look at equation 
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
+
+	// iterate over all particles
+	for (int i = 0; i < num_particles; ++i) {
+		// transform all observations
+		transformObservations(observations,particles[i]);
+
+		// associate landmarks to observations
+		dataAssociation(map_landmarks,particles[i]);
+
+		// calculate the particle weight
+		calcWeight(map_landmarks,particles[i]);
+	}
+
 }
 
 void ParticleFilter::resample() {
