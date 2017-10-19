@@ -18,7 +18,7 @@
 
 #include "particle_filter.h"
 
-#define NUM_PARTICLES 1000
+#define NUM_PARTICLES 100
 #define YAW_RATE_THRESHOLD 0.001
 
 using namespace std;
@@ -78,11 +78,12 @@ void ParticleFilter::prediction(double dt, double std_odometry[], double velocit
 		double theta = particles[i].theta;
 
 		// avoid dividing by zero
-		if (yaw_r > YAW_RATE_THRESHOLD) {
+		//if (fabs(yaw_r) > YAW_RATE_THRESHOLD) {
+		if (yaw_r != 0) {
 			particles[i].x += (v/yaw_r)*(sin(theta+yaw_r*dt) - sin(theta));
 			particles[i].y += (v/yaw_r)*(cos(theta)- cos(theta+yaw_r*dt));
 			particles[i].theta += yaw_r*dt;
-			fixAngle(particles[i].theta);
+			//fixAngle(particles[i].theta);
 		}
 		else {
 			particles[i].x += v*cos(theta)*dt;
@@ -102,6 +103,7 @@ void ParticleFilter::dataAssociation(const Map &map_landmarks, Particle &particl
 		// retrieve relevant variables
 		double x_obs = particle.sense_x[obs_i];
 		double y_obs = particle.sense_y[obs_i];
+		//cout << "Sense data number" << obs_i << ":  x: " << x_obs << "  y: " << y_obs << endl;
 
 		double min_distance = 1000000000.0;
 		double associated_landmark_ind = 0;
@@ -111,16 +113,16 @@ void ParticleFilter::dataAssociation(const Map &map_landmarks, Particle &particl
 			// retrieve relevant variables
 			double x_map = map_landmarks.landmark_list[lm_i].x_f;
 			double y_map = map_landmarks.landmark_list[lm_i].y_f;
-
 			// compute the distance between landmark and observation
 			double distance = dist(x_map,y_map,x_obs,y_obs);
 
 			// if distance is smaller, update the landmark
 			if ( distance < min_distance) {
 				min_distance = distance;
-				associated_landmark_ind = lm_i;
+				associated_landmark_ind = map_landmarks.landmark_list[lm_i].id_i;
 			}
 		}
+		//cout << "\t map data chosen  x: " << map_landmarks.landmark_list[associated_landmark_ind].x_f << "  y: " << map_landmarks.landmark_list[associated_landmark_ind].y_f << endl;
 
 		// append associated landmark
 		particle.associations.push_back(associated_landmark_ind);
@@ -135,12 +137,12 @@ void ParticleFilter::transformObservations(const std::vector<LandmarkObs> &obser
 		double x = observations[i].x;
 		double y = observations[i].y;
 		double xp = particle.x;
-		double yp = particle.x;
+		double yp = particle.y;
 		double theta = particle.theta;
 
 		// Transform the observation from particle frame to map frame
 		double xm = x*cos(theta) - y*sin(theta) + xp;
-		double ym = x*sin(theta) + y*sin(theta) + yp;
+		double ym = x*sin(theta) + y*cos(theta) + yp;
 
 		// append the observations in map frame to the particle
 		particle.sense_x.push_back(xm);
@@ -150,24 +152,28 @@ void ParticleFilter::transformObservations(const std::vector<LandmarkObs> &obser
 
 void ParticleFilter::calcWeight(const Map &map_landmarks, Particle &particle, const double std_landmark[]) {
 	// compute the square of std_landmark
-	const double std_landmark_2[] = {pow(std_landmark[0],2), pow(std_landmark[1],2)};
+	const double std_landmark_2[] = {pow(std_landmark[0],2.0), pow(std_landmark[1],2.0)};
+	const double const_norm = 1/(2*M_PI*std_landmark[0]*std_landmark[1]);
 
 	// iterate over all observations
 	for (int i = 0; i < particle.associations.size(); ++i) {
-		int landmark_ind = particle.associations[i];
+		int landmark_ind = particle.associations[i] - 1;
 		double x_map = map_landmarks.landmark_list[landmark_ind].x_f;
 		double y_map = map_landmarks.landmark_list[landmark_ind].y_f;
 		double x_obs = particle.sense_x[i];
 		double y_obs = particle.sense_y[i];
 
 		// calculate multivariate gaussian
-		double weight = 1/(2*M_PI*std_landmark[0]*std_landmark[1]);
-		weight *= exp(-pow(x_obs-x_map,2)/(2*std_landmark_2[0]) - pow(y_obs-y_map,2)/(2*std_landmark_2[2]));
-
+		double exp_term = pow(x_obs-x_map,2.0)/(2*std_landmark_2[0]) + pow(y_obs-y_map,2.0)/(2*std_landmark_2[1]);
+		double weight = const_norm * exp(-exp_term);
+		//cout << "x_diif and y_diff are: " << fabs(x_obs-x_map) << "\t" << fabs(y_obs-y_map) << endl;
+		//cout << "obs number " << i << " weight is: " << weight << endl;
 		// update total weight
 		particle.weight *= weight;
-		weights.push_back(particle.weight);
+		//cout << "PARTICLE weight is: " << particle.weight << endl;
 	}
+	weights.push_back(particle.weight);
+	//cout << "particle weight is: " << particle.weight << endl;
 }
 
 void ParticleFilter::updateWeights(const double sensor_range, const double std_landmark[],
@@ -211,7 +217,6 @@ void ParticleFilter::resample() {
 	for (int i = 0; i < num_particles; ++i) {
 		Particle new_particle;
 		int particle_index = w_distribution(generator);
-
 		new_particle.id = i;
 		new_particle.weight = 1.0;
 		new_particle.x = particles[particle_index].x;
