@@ -80,7 +80,7 @@ int main()
 		  	double previous_velocity = std::stod(j[1]["previous_velocity"].get<std::string>());
 			double previous_yawrate = std::stod(j[1]["previous_yawrate"].get<std::string>());
 
-			pf.prediction(delta_t, sigma_odometry, previous_velocity, previous_yawrate);
+			pf.prediction(delta_t, sigma_pos, previous_velocity, previous_yawrate);
 		  }
 
 		  // receive noisy observation data from the simulator

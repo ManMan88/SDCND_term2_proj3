@@ -57,7 +57,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	return;
 }
 
-void ParticleFilter::prediction(double dt, double std_odometry[], double velocity, double yaw_rate) {
+void ParticleFilter::prediction(double dt, double std_pose[], double velocity, double yaw_rate) {
 	// TODO: Add measurements to each particle and add random Gaussian noise.
 	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
@@ -65,30 +65,36 @@ void ParticleFilter::prediction(double dt, double std_odometry[], double velocit
 
 	std::default_random_engine generator;
 
-	// generate normal distribution for velocity
-	std::normal_distribution<double> v_distribution(velocity,std_odometry[0]);
 
-	// generate normal distribution for yaw_rate
-	std::normal_distribution<double> yaw_rate_distribution(yaw_rate,std_odometry[1]);
 
 	// predict new location for each particle
 	for (int i = 0; i < num_particles; ++i) {
-		double v = v_distribution(generator);
-		double yaw_r = yaw_rate_distribution(generator);
+		double x = particles[i].x;
+		double y = particles[i].y;
 		double theta = particles[i].theta;
 
 		// avoid dividing by zero
 		//if (fabs(yaw_r) > YAW_RATE_THRESHOLD) {
-		if (yaw_r != 0) {
-			particles[i].x += (v/yaw_r)*(sin(theta+yaw_r*dt) - sin(theta));
-			particles[i].y += (v/yaw_r)*(cos(theta)- cos(theta+yaw_r*dt));
-			particles[i].theta += yaw_r*dt;
-			//fixAngle(particles[i].theta);
+		if (yaw_rate != 0) {
+			x += (velocity/yaw_rate)*(sin(theta+yaw_rate*dt) - sin(theta));
+			y += (velocity/yaw_rate)*(cos(theta)- cos(theta+yaw_rate*dt));
+			theta += yaw_rate*dt;
+
 		}
 		else {
-			particles[i].x += v*cos(theta)*dt;
-			particles[i].y += v*sin(theta)*dt;
+			x += velocity*cos(theta)*dt;
+			y += velocity*sin(theta)*dt;
 		}
+		// generate normal distribution for x
+		std::normal_distribution<double> x_distribution(x,std_pose[0]);
+		// generate normal distribution for y
+		std::normal_distribution<double> y_distribution(y,std_pose[1]);
+		// generate normal distribution for theta
+		std::normal_distribution<double> theta_distribution(theta,std_pose[2]);
+
+		particles[i].x = x_distribution(generator);
+		particles[i].y = y_distribution(generator);
+		particles[i].theta = theta_distribution(generator);
 	}
 }
 

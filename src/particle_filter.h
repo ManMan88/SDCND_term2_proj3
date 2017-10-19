@@ -68,7 +68,7 @@ public:
 	 * @param velocity Velocity of car from t to t+1 [m/s]
 	 * @param yaw_rate Yaw rate of car from t to t+1 [rad/s]
 	 */
-	void prediction(double delta_t, double std_pos[], double velocity, double yaw_rate);
+	void prediction(double dt, double std_pos[], double velocity, double yaw_rate);
 	
 	/** CHANGED
 	 * dataAssociation Finds which observations correspond to which landmarks (by using
