@@ -35,7 +35,7 @@ int main()
 
   double sigma_pos [3] = {0.3, 0.3, 0.01}; // GPS measurement uncertainty [x [m], y [m], theta [rad]]
   double sigma_landmark [2] = {0.3, 0.3}; // Landmark measurement uncertainty [x [m], y [m]]
-  double sigma_odometry [2] = {1.0, 0.03}; // velocity and yaw rate uncertainty [v [m/s], yaw_r [rad/s]]
+  //double sigma_odometry [2] = {1.0, 0.03}; // velocity and yaw rate uncertainty [v [m/s], yaw_r [rad/s]]
 
   // Read map data
   Map map;
@@ -47,7 +47,7 @@ int main()
   // Create particle filter
   ParticleFilter pf;
 
-  h.onMessage([&pf,&map,&delta_t,&sensor_range,&sigma_pos,&sigma_landmark,&sigma_odometry](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  h.onMessage([&pf,&map,&delta_t,&sensor_range,&sigma_pos,&sigma_landmark](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -113,7 +113,6 @@ int main()
 
 		  // Update the weights and resample
 		  pf.updateWeights(sensor_range, sigma_landmark, noisy_observations, map);
-		  //pf.resample();
 
 		  // Calculate and output the average weighted error of the particle filter over all time steps so far.
 		  vector<Particle> particles = pf.particles;
@@ -129,11 +128,11 @@ int main()
 			weight_sum += particles[i].weight;
 		  }
 		  //getchar();
-		  cout << "highest w " << highest_weight << endl;
-		  cout << "average w " << weight_sum/num_particles << endl;
+		  //cout << "highest w " << highest_weight << endl;
+		  //cout << "average w " << weight_sum/num_particles << endl;
 
 		  //DEBUG
-		  for (int i = 0; i < best_particle.associations.size(); ++i) {
+		  /*for (int i = 0; i < best_particle.associations.size(); ++i) {
 			  double x_obs = best_particle.sense_x[i];
 			  double y_obs = best_particle.sense_y[i];
 			  double x_map = map.landmark_list[best_particle.associations[i]-1].x_f;
@@ -142,7 +141,7 @@ int main()
 			  double std_landmark_2[] = {pow(sigma_landmark[0],2), pow(sigma_landmark[1],2)};
 			  double weight = const_norm * exp(-pow(x_obs-x_map,2)/(2*std_landmark_2[0]) - pow(y_obs-y_map,2)/(2*std_landmark_2[1]));
 			  cout << "TObs(x,y)("<<x_obs<<","<<y_obs<<")-->PObs(x,y)("<<x_map<<","<<y_map<<")"<< "  the weight is: "<< weight <<endl;
-		  }
+		  }*/
 
           json msgJson;
           msgJson["best_particle_x"] = best_particle.x;
@@ -154,6 +153,7 @@ int main()
           msgJson["best_particle_sense_x"] = pf.getSenseX(best_particle);
           msgJson["best_particle_sense_y"] = pf.getSenseY(best_particle);
 
+          //pf.resample();
           pf.resample();
 
           auto msg = "42[\"best_particle\"," + msgJson.dump() + "]";

@@ -92,6 +92,7 @@ void ParticleFilter::prediction(double dt, double std_pose[], double velocity, d
 		// generate normal distribution for theta
 		std::normal_distribution<double> theta_distribution(theta,std_pose[2]);
 
+		// apply uncertainty
 		particles[i].x = x_distribution(generator);
 		particles[i].y = y_distribution(generator);
 		particles[i].theta = theta_distribution(generator);
@@ -109,7 +110,6 @@ void ParticleFilter::dataAssociation(const Map &map_landmarks, Particle &particl
 		// retrieve relevant variables
 		double x_obs = particle.sense_x[obs_i];
 		double y_obs = particle.sense_y[obs_i];
-		//cout << "Sense data number" << obs_i << ":  x: " << x_obs << "  y: " << y_obs << endl;
 
 		double min_distance = 1000000000.0;
 		double associated_landmark_ind = 0;
@@ -128,7 +128,6 @@ void ParticleFilter::dataAssociation(const Map &map_landmarks, Particle &particl
 				associated_landmark_ind = map_landmarks.landmark_list[lm_i].id_i;
 			}
 		}
-		//cout << "\t map data chosen  x: " << map_landmarks.landmark_list[associated_landmark_ind].x_f << "  y: " << map_landmarks.landmark_list[associated_landmark_ind].y_f << endl;
 
 		// append associated landmark
 		particle.associations.push_back(associated_landmark_ind);
@@ -172,14 +171,11 @@ void ParticleFilter::calcWeight(const Map &map_landmarks, Particle &particle, co
 		// calculate multivariate gaussian
 		double exp_term = pow(x_obs-x_map,2.0)/(2*std_landmark_2[0]) + pow(y_obs-y_map,2.0)/(2*std_landmark_2[1]);
 		double weight = const_norm * exp(-exp_term);
-		//cout << "x_diif and y_diff are: " << fabs(x_obs-x_map) << "\t" << fabs(y_obs-y_map) << endl;
-		//cout << "obs number " << i << " weight is: " << weight << endl;
+
 		// update total weight
 		particle.weight *= weight;
-		//cout << "PARTICLE weight is: " << particle.weight << endl;
 	}
 	weights.push_back(particle.weight);
-	//cout << "particle weight is: " << particle.weight << endl;
 }
 
 void ParticleFilter::updateWeights(const double sensor_range, const double std_landmark[],
@@ -220,6 +216,7 @@ void ParticleFilter::resample() {
 
 	std::vector<Particle> temp_particles;
 
+	//draw particles
 	for (int i = 0; i < num_particles; ++i) {
 		Particle new_particle;
 		int particle_index = w_distribution(generator);
@@ -230,6 +227,7 @@ void ParticleFilter::resample() {
 		new_particle.theta = particles[particle_index].theta;
 		temp_particles.push_back(new_particle);
 	}
+	// init variables
 	particles.clear();
 	weights.clear();
 	particles = temp_particles;
