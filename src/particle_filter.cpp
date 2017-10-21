@@ -64,7 +64,12 @@ void ParticleFilter::prediction(double dt, double std_pose[], double velocity, d
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
 
 	std::default_random_engine generator;
-
+	// generate normal distribution for x
+	std::normal_distribution<double> x_distribution(0,std_pose[0]);
+	// generate normal distribution for y
+	std::normal_distribution<double> y_distribution(0,std_pose[1]);
+	// generate normal distribution for theta
+	std::normal_distribution<double> theta_distribution(0,std_pose[2]);
 
 
 	// predict new location for each particle
@@ -85,17 +90,11 @@ void ParticleFilter::prediction(double dt, double std_pose[], double velocity, d
 			x += velocity*cos(theta)*dt;
 			y += velocity*sin(theta)*dt;
 		}
-		// generate normal distribution for x
-		std::normal_distribution<double> x_distribution(x,std_pose[0]);
-		// generate normal distribution for y
-		std::normal_distribution<double> y_distribution(y,std_pose[1]);
-		// generate normal distribution for theta
-		std::normal_distribution<double> theta_distribution(theta,std_pose[2]);
 
 		// apply uncertainty
-		particles[i].x = x_distribution(generator);
-		particles[i].y = y_distribution(generator);
-		particles[i].theta = theta_distribution(generator);
+		particles[i].x = x + x_distribution(generator);
+		particles[i].y = y + y_distribution(generator);
+		particles[i].theta = theta + theta_distribution(generator);
 	}
 }
 
