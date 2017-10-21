@@ -83,7 +83,7 @@ public:
 	 * @param an observation in particle frame
 	 * @param a particle containing its observations in map coordinates and associations
 	 */
-	void transformObservations(const std::vector<LandmarkObs> &observations, Particle &particle);
+	void transformObservations(const double sensor_range, const std::vector<LandmarkObs> &observations, Particle &particle);
 
 	/** ADDED
 	 * calculates the weight of a particle base on its sense data and associations

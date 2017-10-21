@@ -134,23 +134,27 @@ void ParticleFilter::dataAssociation(const Map &map_landmarks, Particle &particl
 
 }
 
-void ParticleFilter::transformObservations(const std::vector<LandmarkObs> &observations, Particle &particle) {
+void ParticleFilter::transformObservations(const double sensor_range, const std::vector<LandmarkObs> &observations, Particle &particle) {
 	// iterate over all observations
 	for (int i = 0; i < observations.size(); ++i) {
 		// retrieve relevant variables
 		double x = observations[i].x;
 		double y = observations[i].y;
-		double xp = particle.x;
-		double yp = particle.y;
-		double theta = particle.theta;
 
-		// Transform the observation from particle frame to map frame
-		double xm = x*cos(theta) - y*sin(theta) + xp;
-		double ym = x*sin(theta) + y*cos(theta) + yp;
+		//check that the measurement is smaller than the sensor_range
+		if (dist(x,y,0,0) < sensor_range) {
+			double xp = particle.x;
+			double yp = particle.y;
+			double theta = particle.theta;
 
-		// append the observations in map frame to the particle
-		particle.sense_x.push_back(xm);
-		particle.sense_y.push_back(ym);
+			// Transform the observation from particle frame to map frame
+			double xm = x*cos(theta) - y*sin(theta) + xp;
+			double ym = x*sin(theta) + y*cos(theta) + yp;
+
+			// append the observations in map frame to the particle
+			particle.sense_x.push_back(xm);
+			particle.sense_y.push_back(ym);
+		}
 	}
 }
 
@@ -193,7 +197,7 @@ void ParticleFilter::updateWeights(const double sensor_range, const double std_l
 	// iterate over all particles
 	for (int i = 0; i < num_particles; ++i) {
 		// transform all observations
-		transformObservations(observations,particles[i]);
+		transformObservations(sensor_range,observations,particles[i]);
 
 		// associate landmarks to observations
 		dataAssociation(map_landmarks,particles[i]);
